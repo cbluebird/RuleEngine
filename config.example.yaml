@@ -1,0 +1,33 @@
+dev: true
+
+server:
+  port: "8080"
+  allow_origins:
+    - "http://127.0.0.1:3000"
+
+db:
+  user: "root"
+  password: ""
+  address: "localhost:3306"
+  name: "ruleengine"
+
+jwt:
+  secret: "secretKey"
+  issuer: "issuer"
+  expires: 48
+
+email:
+  sender: "1234566@qq.com"
+  pwd:  ""
+  smtpaddr: "smtp.qq.com"
+  smtpport: 465
+
+redis:
+  host: "127.0.0.1"
+  port: "6379"
+  db: 0
+  password:
+
+session:
+  name: rule-session
+  driver: redis
