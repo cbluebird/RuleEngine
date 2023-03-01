@@ -19,6 +19,7 @@ type Scanner struct {
 	ch       rune   // position 位置对应的字符
 }
 
+// NewScanner 新建一个Scanner扫描规则
 func NewScanner(source string) *Scanner {
 	runes := []rune(source)
 
@@ -65,6 +66,7 @@ func (scanner *Scanner) peek() rune {
 	return eofRune
 }
 
+// 判断有没有超出范围
 func (scanner *Scanner) canRead() bool {
 	return scanner.position < scanner.length
 }
@@ -299,6 +301,7 @@ func (scanner *Scanner) Scan() (token.Token, error) {
 	return tok, err
 }
 
+// 词语法分析，生成token供给parser做语法分析
 func (scanner *Scanner) Lexer() ([]token.Token, error) {
 	tokens := make([]token.Token, 0)
 

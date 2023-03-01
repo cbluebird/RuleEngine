@@ -6,10 +6,11 @@ import (
 	"fmt"
 )
 
+// Parser 接收来自scanner的tokens，作语法分析
 type Parser struct {
-	tokens      []token.Token
-	index       int
-	tokenLength int
+	tokens      []token.Token //来自scanner的tokens
+	index       int           //下标
+	tokenLength int           //token个数
 }
 
 func NewParser(tokens []token.Token) *Parser {
@@ -35,7 +36,7 @@ func (p *Parser) hasNext() bool {
 }
 
 // checkBalance Checks the balance of tokens which have multiple parts, such as parenthesis.
-func (p *Parser) checkBalance() error {
+func (p *Parser) CheckBalance() error {
 	var parens int
 
 	for p.hasNext() {
@@ -57,9 +58,10 @@ func (p *Parser) checkBalance() error {
 	return nil
 }
 
+// ParseSyntax 语法分析主体
 func (p *Parser) ParseSyntax() error {
 	// '(a + (b > c)' is illegal
-	err := p.checkBalance()
+	err := p.CheckBalance()
 	if err != nil {
 		return err
 	}
