@@ -1,19 +1,19 @@
 package compiler
 
 import (
-	"engine/app/token"
+	token2 "engine/app/engine/token"
 	"errors"
 	"fmt"
 )
 
 // Parser 接收来自scanner的tokens，作语法分析
 type Parser struct {
-	tokens      []token.Token //来自scanner的tokens
-	index       int           //下标
-	tokenLength int           //token个数
+	tokens      []token2.Token //来自scanner的tokens
+	index       int            //下标
+	tokenLength int            //token个数
 }
 
-func NewParser(tokens []token.Token) *Parser {
+func NewParser(tokens []token2.Token) *Parser {
 	return &Parser{
 		tokens:      tokens,
 		tokenLength: len(tokens),
@@ -24,8 +24,8 @@ func (p *Parser) rewind() {
 	p.index -= 1
 }
 
-func (p *Parser) next() token.Token {
-	var tok token.Token
+func (p *Parser) next() token2.Token {
+	var tok token2.Token
 	tok = p.tokens[p.index]
 	p.index += 1
 	return tok
@@ -41,11 +41,11 @@ func (p *Parser) CheckBalance() error {
 
 	for p.hasNext() {
 		tok := p.next()
-		if tok.Kind == token.OpenParen {
+		if tok.Kind == token2.OpenParen {
 			parens++
 			continue
 		}
-		if tok.Kind == token.CloseParen {
+		if tok.Kind == token2.CloseParen {
 			parens--
 			continue
 		}
@@ -67,7 +67,7 @@ func (p *Parser) ParseSyntax() error {
 	}
 
 	// 'param1 + 100 param2' is illegal
-	var lastTok token.Token
+	var lastTok token2.Token
 	state, err := lastTok.Kind.GetLexerState()
 	for p.hasNext() {
 		tok := p.next()

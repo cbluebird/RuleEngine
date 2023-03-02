@@ -1,7 +1,7 @@
 package controller
 
 import (
-	"engine/app/compiler"
+	"engine/app/engine"
 	"engine/app/model"
 	"engine/app/utility"
 	"engine/config/database"
@@ -33,26 +33,6 @@ func GetScore(c *gin.Context) {
 		&model.Rule{ID: ruleid},
 	).First(&rule)
 	log.Println(rule)
-	scanner := compiler.NewScanner(rule.Message)
-	tokens, _ := scanner.Lexer()
-	parser := compiler.NewParser(tokens)
-	parser.Print()
-	err := parser.CheckBalance()
-	if err != nil {
-		log.Println(err)
-		return
-	}
-	err = parser.ParseSyntax()
-	if err != nil {
-		log.Println(err)
-		return
-	}
-	bulider := compiler.NewBuilder(parser)
-	node, err_ := bulider.Build()
-	if err_ != nil {
-		log.Println(err)
-		return
-	}
 	m := make(map[int]float64, 6)
 	for _, v := range list {
 		m[v.Module] += v.Score
@@ -61,9 +41,12 @@ func GetScore(c *gin.Context) {
 	for i := 1; i <= 6; i++ {
 		value[model.GetModule[i]] = m[i]
 	}
-	node.Eval(value)
-	log.Println(node.GetVal())
-	val, _ := node.GetVal()
-	log.Println(val)
+	engine := engine.NewEngine(rule.Message)
+	err := engine.Calculate(value)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	val, _ := engine.GetVal()
 	utility.JsonResponse(200, "ok", val, c)
 }

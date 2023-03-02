@@ -1,13 +1,12 @@
 package compiler
 
 import (
+	token2 "engine/app/engine/token"
 	"errors"
 	"fmt"
 	"strconv"
 	"strings"
 	"unicode"
-
-	"engine/app/token"
 )
 
 const eofRune = -1
@@ -203,7 +202,7 @@ func (scanner *Scanner) scanEscape(quote rune) error {
 	return nil
 }
 
-func (scanner *Scanner) scanSwitch2(kid0 token.Kind, ch1 rune, kid1 token.Kind) (string, token.Kind) {
+func (scanner *Scanner) scanSwitch2(kid0 token2.Kind, ch1 rune, kid1 token2.Kind) (string, token2.Kind) {
 	var s string
 	s += string(scanner.read())
 	if scanner.cur() == ch1 {
@@ -213,19 +212,19 @@ func (scanner *Scanner) scanSwitch2(kid0 token.Kind, ch1 rune, kid1 token.Kind) 
 	return s, kid0
 }
 
-func (scanner *Scanner) scanExpect1(kid token.Kind, ch rune) (string, token.Kind) {
+func (scanner *Scanner) scanExpect1(kid token2.Kind, ch rune) (string, token2.Kind) {
 	var s string
 	s += string(scanner.read())
 	if scanner.cur() == ch {
 		s += string(scanner.read())
 		return s, kid
 	} else {
-		return s, token.Illegal
+		return s, token2.Illegal
 	}
 }
 
-func (scanner *Scanner) Scan() (token.Token, error) {
-	var tok token.Token
+func (scanner *Scanner) Scan() (token2.Token, error) {
+	var tok token2.Token
 	var err error
 
 	scanner.skipWhitespace()
@@ -233,14 +232,14 @@ func (scanner *Scanner) Scan() (token.Token, error) {
 
 	switch ch := scanner.cur(); {
 	case isEof(ch):
-		tok.Kind = token.Eof
+		tok.Kind = token2.Eof
 	case isLetter(ch):
 		// if the first character is letter, this token must be an Identifier or BoolLiteral or otherwise
 		literal := scanner.scanIdentifier()
-		tok.Kind = token.Lookup(literal)
+		tok.Kind = token2.Lookup(literal)
 		tok.Value = literal
 		// boolean?
-		if tok.Kind == token.BoolLiteral {
+		if tok.Kind == token2.BoolLiteral {
 			tok.Value = parseBool(literal)
 		}
 	case isDecimal(ch) || isDot(ch): // 123  123.4  .678   7.7.7
@@ -248,10 +247,10 @@ func (scanner *Scanner) Scan() (token.Token, error) {
 		literal := scanner.scanNumber()
 		if strings.Contains(literal, ".") { // float
 			tok.Value, err = strconv.ParseFloat(literal, 64)
-			tok.Kind = token.FloatLiteral
+			tok.Kind = token2.FloatLiteral
 		} else { // int
 			tok.Value, err = strconv.ParseInt(literal, 10, 64)
-			tok.Kind = token.IntegerLiteral
+			tok.Kind = token2.IntegerLiteral
 		}
 
 		if err != nil {
@@ -261,37 +260,37 @@ func (scanner *Scanner) Scan() (token.Token, error) {
 	default:
 		switch ch {
 		case '+', '-', '*', '/', '%', '(', ')': // 确定的单一运算符
-			tok.Kind = token.LookupOperator(string(ch))
+			tok.Kind = token2.LookupOperator(string(ch))
 			tok.Value = scanner.read()
 		case '"', '\'':
-			tok.Kind = token.StringLiteral
+			tok.Kind = token2.StringLiteral
 			tok.Value, err = scanner.scanString()
 		case '`':
-			tok.Kind = token.StringLiteral
+			tok.Kind = token2.StringLiteral
 			tok.Value, err = scanner.scanRawString()
 		case '<':
-			tok.Value, tok.Kind = scanner.scanSwitch2(token.LessThan, '=', token.LessEqual)
+			tok.Value, tok.Kind = scanner.scanSwitch2(token2.LessThan, '=', token2.LessEqual)
 		case '>':
-			tok.Value, tok.Kind = scanner.scanSwitch2(token.GreaterThan, '=', token.GreaterEqual)
+			tok.Value, tok.Kind = scanner.scanSwitch2(token2.GreaterThan, '=', token2.GreaterEqual)
 		case '!':
-			tok.Value, tok.Kind = scanner.scanSwitch2(token.Not, '=', token.NotEqual)
+			tok.Value, tok.Kind = scanner.scanSwitch2(token2.Not, '=', token2.NotEqual)
 		case '=':
-			tok.Value, tok.Kind = scanner.scanSwitch2(token.Illegal, '=', token.Equal)
+			tok.Value, tok.Kind = scanner.scanSwitch2(token2.Illegal, '=', token2.Equal)
 			if tok.Kind.IsIllegal() {
 				return tok, errors.New("expected to get '==', but only found '='")
 			}
 		case '&':
-			tok.Value, tok.Kind = scanner.scanSwitch2(token.Illegal, '&', token.And)
+			tok.Value, tok.Kind = scanner.scanSwitch2(token2.Illegal, '&', token2.And)
 			if tok.Kind.IsIllegal() {
 				return tok, errors.New("expected to get '&&', but only found '&'")
 			}
 		case '|':
-			tok.Value, tok.Kind = scanner.scanSwitch2(token.Illegal, '|', token.Or)
+			tok.Value, tok.Kind = scanner.scanSwitch2(token2.Illegal, '|', token2.Or)
 			if tok.Kind.IsIllegal() {
 				return tok, errors.New("expected to get '||', but only found '|'")
 			}
 		default:
-			tok.Kind = token.Illegal
+			tok.Kind = token2.Illegal
 			tok.Value = string(ch)
 			errMsg := fmt.Sprintf("the scan found an illegal character '%v'", ch)
 			return tok, errors.New(errMsg)
@@ -302,15 +301,15 @@ func (scanner *Scanner) Scan() (token.Token, error) {
 }
 
 // 词语法分析，生成token供给parser做语法分析
-func (scanner *Scanner) Lexer() ([]token.Token, error) {
-	tokens := make([]token.Token, 0)
+func (scanner *Scanner) Lexer() ([]token2.Token, error) {
+	tokens := make([]token2.Token, 0)
 
 	var err error
-	var tok token.Token
+	var tok token2.Token
 	for {
 		tok, err = scanner.Scan()
 		tokens = append(tokens, tok)
-		if err != nil || tok.Kind == token.Eof {
+		if err != nil || tok.Kind == token2.Eof {
 			break
 		}
 	}

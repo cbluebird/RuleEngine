@@ -1,16 +1,16 @@
 package compiler
 
 import (
-	"engine/app/executor"
-	"engine/app/token"
+	executor2 "engine/app/engine/executor"
+	"engine/app/engine/token"
 	"errors"
 	"fmt"
 )
 
 // planner
-type planner func(builder *Builder, curPre *precedence) (*executor.Node, error)
+type planner func(builder *Builder, curPre *precedence) (*executor2.Node, error)
 
-func planValue(builder *Builder, curPre *precedence) (*executor.Node, error) {
+func planValue(builder *Builder, curPre *precedence) (*executor2.Node, error) {
 	if !builder.parser.hasNext() {
 		return nil, nil
 	}
@@ -30,36 +30,36 @@ func planValue(builder *Builder, curPre *precedence) (*executor.Node, error) {
 		// the stage we got represents all of the logic contained within the parens
 		// but for technical reasons, we need to wrap this stage in a "noop" stage which breaks long chains of precedence.
 		// see github #33.
-		node := executor.NewNode(nil, ret, executor.NOOP, nil)
+		node := executor2.NewNode(nil, ret, executor2.NOOP, nil)
 		return node, nil
 	case token.Identifier:
-		node := executor.NewNode(nil, nil, executor.VALUE, tok.Value)
+		node := executor2.NewNode(nil, nil, executor2.VALUE, tok.Value)
 		return node, nil
 	case token.IntegerLiteral:
-		node := executor.NewNodeWithType(nil, nil, executor.LITERAL, tok.Value, executor.TypeInteger)
+		node := executor2.NewNodeWithType(nil, nil, executor2.LITERAL, tok.Value, executor2.TypeInteger)
 		return node, nil
 	case token.FloatLiteral:
-		node := executor.NewNodeWithType(nil, nil, executor.LITERAL, tok.Value, executor.TypeFloat)
+		node := executor2.NewNodeWithType(nil, nil, executor2.LITERAL, tok.Value, executor2.TypeFloat)
 		return node, nil
 	case token.BoolLiteral:
-		node := executor.NewNodeWithType(nil, nil, executor.LITERAL, tok.Value, executor.TypeBool)
+		node := executor2.NewNodeWithType(nil, nil, executor2.LITERAL, tok.Value, executor2.TypeBool)
 		return node, nil
 	case token.StringLiteral:
-		node := executor.NewNodeWithType(nil, nil, executor.LITERAL, tok.Value, executor.TypeString)
+		node := executor2.NewNodeWithType(nil, nil, executor2.LITERAL, tok.Value, executor2.TypeString)
 		return node, nil
 	case token.Subtraction:
 		ret, err := curPre.plan(builder)
 		if err != nil {
 			return nil, err
 		}
-		node := executor.NewNodeWithPrefixFix(ret, executor.NEGATIVE, nil)
+		node := executor2.NewNodeWithPrefixFix(ret, executor2.NEGATIVE, nil)
 		return node, nil
 	case token.Addition: // token.Not,
 		ret, err := curPre.plan(builder)
 		if err != nil {
 			return nil, err
 		}
-		node := executor.NewNodeWithPrefixFix(ret, executor.POSITIVE, nil)
+		node := executor2.NewNodeWithPrefixFix(ret, executor2.POSITIVE, nil)
 		return node, nil
 	case token.Not:
 		builder.parser.rewind()
@@ -71,54 +71,54 @@ func planValue(builder *Builder, curPre *precedence) (*executor.Node, error) {
 }
 
 type precedence struct {
-	validKindsToSymbols map[token.Kind]executor.Symbol // 当前优先级的token类型
-	nextPrecedence      *precedence                    // 更高优先级的
+	validKindsToSymbols map[token.Kind]executor2.Symbol // 当前优先级的token类型
+	nextPrecedence      *precedence                     // 更高优先级的
 	planner             planner
 }
 
 var (
 	// * / %
 	multiplicative = &precedence{
-		validKindsToSymbols: executor.MultiKindsToSymbol,
+		validKindsToSymbols: executor2.MultiKindsToSymbol,
 		planner:             planValue,
 	}
 
 	// + -
 	additive = &precedence{
-		validKindsToSymbols: executor.AddKindsToSymbol,
+		validKindsToSymbols: executor2.AddKindsToSymbol,
 		nextPrecedence:      multiplicative,
 	}
 
 	// > >= < <= == !=
 	comparator = &precedence{
-		validKindsToSymbols: executor.CompareKindsToSymbol,
+		validKindsToSymbols: executor2.CompareKindsToSymbol,
 		nextPrecedence:      additive,
 	}
 
 	//!
 	logicalNot = &precedence{
-		validKindsToSymbols: executor.NotKindsToSymbol,
+		validKindsToSymbols: executor2.NotKindsToSymbol,
 		nextPrecedence:      comparator,
 	}
 
 	// &&
 	logicalAnd = &precedence{
-		validKindsToSymbols: executor.AndKindsToSymbol,
+		validKindsToSymbols: executor2.AndKindsToSymbol,
 		nextPrecedence:      logicalNot,
 	}
 
 	// ||
 	logicalOr = &precedence{
-		validKindsToSymbols: executor.OrKindsToSymbol,
+		validKindsToSymbols: executor2.OrKindsToSymbol,
 		nextPrecedence:      logicalAnd,
 	}
 
 	lowestPrecedence = logicalOr
 )
 
-func (p *precedence) plan(builder *Builder) (*executor.Node, error) {
+func (p *precedence) plan(builder *Builder) (*executor2.Node, error) {
 	var err error
-	var leftNode, rightNode *executor.Node
+	var leftNode, rightNode *executor2.Node
 
 	if p.nextPrecedence != nil {
 		leftNode, err = p.nextPrecedence.plan(builder)
@@ -149,7 +149,7 @@ func (p *precedence) plan(builder *Builder) (*executor.Node, error) {
 			return nil, err
 		}
 
-		node := executor.NewNode(leftNode, rightNode, symbol, nil)
+		node := executor2.NewNode(leftNode, rightNode, symbol, nil)
 		return node, nil
 	}
 	builder.parser.rewind()
@@ -168,7 +168,7 @@ func NewBuilder(p *Parser) *Builder {
 	}
 }
 
-func (b *Builder) Build() (*executor.Node, error) {
+func (b *Builder) Build() (*executor2.Node, error) {
 	if b.parser == nil {
 		return nil, errors.New("parse is nil")
 	}
