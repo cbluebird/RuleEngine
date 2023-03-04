@@ -3,7 +3,9 @@ package engine
 import (
 	"engine/app/engine/compiler"
 	"engine/app/engine/executor"
+	"fmt"
 	"log"
+	"strconv"
 )
 
 type Engine struct {
@@ -53,4 +55,13 @@ func (e *Engine) Calculate(parameters map[string]interface{}) error {
 
 func (e *Engine) GetVal() (interface{}, executor.TypeFlags) {
 	return e.node.GetVal()
+}
+
+func (e *Engine) Print() {
+	e.node.PrintSvg("test")
+}
+
+func (e *Engine) Decimal(num float64) float64 {
+	ans, _ := strconv.ParseFloat(fmt.Sprintf("%.2f", num), 64)
+	return ans
 }

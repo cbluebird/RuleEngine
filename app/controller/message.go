@@ -48,5 +48,7 @@ func GetScore(c *gin.Context) {
 		return
 	}
 	val, _ := engine.GetVal()
-	utility.JsonResponse(200, "ok", val, c)
+	log.Println(engine.GetVal())
+	ans := engine.Decimal(val.(float64))
+	utility.JsonResponse(200, "ok", ans, c)
 }
